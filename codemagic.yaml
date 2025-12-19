@@ -19,11 +19,11 @@ workflows:
           echo "Verificando proyecto iOS..."
           if [ ! -f "ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
             echo "⚠️ project.pbxproj no encontrado o vacío"
-            echo "Generando project.pbxproj usando Python..."
+            echo "Generando project.pbxproj básico..."
             cd ios
             mkdir -p TSXNEQUIKIL.xcodeproj
-            python3 -c "
-            content = '''// !\$*UTF8*\$!
+            cat > TSXNEQUIKIL.xcodeproj/project.pbxproj << 'ENDOFFILE'
+// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -37,8 +37,8 @@ workflows:
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 			};
-			buildConfigurationList = 3 /* Build configuration list for PBXProject \"TSXNEQUIKIL\" */;
-			compatibilityVersion = \"Xcode 14.0\";
+			buildConfigurationList = 3 /* Build configuration list for PBXProject "TSXNEQUIKIL" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -47,15 +47,15 @@ workflows:
 			);
 			mainGroup = 4;
 			productRefGroup = 5 /* Products */;
-			projectDirPath = \"\";
-			projectRoot = \"\";
+			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				2 /* TSXNEQUIKIL */,
 			);
 		};
 		2 /* TSXNEQUIKIL */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6 /* Build configuration list for PBXNativeTarget \"TSXNEQUIKIL\" */;
+			buildConfigurationList = 6 /* Build configuration list for PBXNativeTarget "TSXNEQUIKIL" */;
 			buildPhases = (
 			);
 			buildRules = (
@@ -65,9 +65,9 @@ workflows:
 			name = TSXNEQUIKIL;
 			productName = TSXNEQUIKIL;
 			productReference = 7 /* TSXNEQUIKIL.app */;
-			productType = \"com.apple.product-type.application\";
+			productType = "com.apple.product-type.application";
 		};
-		3 /* Build configuration list for PBXProject \"TSXNEQUIKIL\" */ = {
+		3 /* Build configuration list for PBXProject "TSXNEQUIKIL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8 /* Debug */,
@@ -81,7 +81,7 @@ workflows:
 			children = (
 				5 /* Products */,
 			);
-			sourceTree = \"<group>\";
+			sourceTree = "<group>";
 		};
 		5 /* Products */ = {
 			isa = PBXGroup;
@@ -89,9 +89,9 @@ workflows:
 				7 /* TSXNEQUIKIL.app */,
 			);
 			name = Products;
-			sourceTree = \"<group>\";
+			sourceTree = "<group>";
 		};
-		6 /* Build configuration list for PBXNativeTarget \"TSXNEQUIKIL\" */ = {
+		6 /* Build configuration list for PBXNativeTarget "TSXNEQUIKIL" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				10 /* Debug */,
@@ -134,11 +134,8 @@ workflows:
 	};
 	rootObject = 1 /* Project object */;
 }
-'''
-            with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'w') as f:
-                f.write(content)
-            print('✅ project.pbxproj básico creado')
-            "
+ENDOFFILE
+            echo "✅ project.pbxproj básico creado"
             cd ..
           else
             echo "✅ project.pbxproj existe"
