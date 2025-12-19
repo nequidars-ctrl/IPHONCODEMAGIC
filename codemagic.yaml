@@ -117,22 +117,19 @@ workflows:
           PBXPROJ="TSXNEQUIKIL.xcodeproj/project.pbxproj"
           
           if [ -f "$PBXPROJ" ]; then
-            # Verificar y agregar PRODUCT_NAME si falta
+            # Verificar y agregar PRODUCT_NAME si falta usando printf para evitar problemas YAML
             if ! grep -q "PRODUCT_NAME = TSXNEQUIKIL" "$PBXPROJ"; then
               echo "Agregando PRODUCT_NAME..."
-              sed -i.bak 's/buildSettings = {/buildSettings = {\
-				PRODUCT_NAME = TSXNEQUIKIL;/' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' 's/buildSettings = {/buildSettings = {\
-				PRODUCT_NAME = TSXNEQUIKIL;/' "$PBXPROJ" 2>/dev/null || true
+              printf '%s\n\t\t\tPRODUCT_NAME = TSXNEQUIKIL;\n' "$(sed 's/buildSettings = {/&/' "$PBXPROJ")" > /tmp/pbxproj_fixed.txt 2>/dev/null || true
+              if [ -f /tmp/pbxproj_fixed.txt ]; then
+                sed -i.bak 's/buildSettings = {/&\n\t\t\tPRODUCT_NAME = TSXNEQUIKIL;/' "$PBXPROJ" 2>/dev/null || sed -i '' 's/buildSettings = {/&\n\t\t\tPRODUCT_NAME = TSXNEQUIKIL;/' "$PBXPROJ" 2>/dev/null || true
+              fi
             fi
             
             # Verificar y agregar INFOPLIST_FILE si falta
             if ! grep -q "INFOPLIST_FILE = TSXNEQUIKIL/Info.plist" "$PBXPROJ"; then
               echo "Agregando INFOPLIST_FILE..."
-              sed -i.bak 's/PRODUCT_NAME = TSXNEQUIKIL;/PRODUCT_NAME = TSXNEQUIKIL;\
-				INFOPLIST_FILE = TSXNEQUIKIL\/Info.plist;/' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' 's/PRODUCT_NAME = TSXNEQUIKIL;/PRODUCT_NAME = TSXNEQUIKIL;\
-				INFOPLIST_FILE = TSXNEQUIKIL\/Info.plist;/' "$PBXPROJ" 2>/dev/null || true
+              sed -i.bak 's/PRODUCT_NAME = TSXNEQUIKIL;/&\n\t\t\tINFOPLIST_FILE = TSXNEQUIKIL\/Info.plist;/' "$PBXPROJ" 2>/dev/null || sed -i '' 's/PRODUCT_NAME = TSXNEQUIKIL;/&\n\t\t\tINFOPLIST_FILE = TSXNEQUIKIL\/Info.plist;/' "$PBXPROJ" 2>/dev/null || true
             fi
             
             echo "✅ Configuraciones del proyecto verificadas"
