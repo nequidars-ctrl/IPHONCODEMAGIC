@@ -23,9 +23,7 @@ target 'TSXNEQUIKIL' do
   )
 
   # Lottie - se instala automáticamente con use_native_modules!
-  
-  # Workaround para problema de checksum de boost
-  pod 'boost', '1.76.0', :modular_headers => true
+  # boost se instala automáticamente desde react-native/third-party-podspecs
 
   post_install do |installer|
     react_native_post_install(

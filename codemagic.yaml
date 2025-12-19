@@ -111,16 +111,16 @@ workflows:
           
           if [ "$INSTALL_SUCCESS" = false ]; then
             echo "❌ Intentos normales fallaron"
-            echo "El Podfile ya tiene boost especificado explícitamente"
+            echo "El error es por dependencias duplicadas de boost"
+            echo "React Native ya incluye boost automáticamente"
             echo "Verificando si el workspace se generó a pesar del error..."
             
             if [ -d "TSXNEQUIKIL.xcworkspace" ]; then
-              echo "✅ Workspace generado (boost puede tener error pero no es crítico)"
+              echo "✅ Workspace generado"
               INSTALL_SUCCESS=true
             else
               echo "❌ No se pudo generar workspace"
-              echo "Verificando estructura de Pods..."
-              ls -la Pods/ 2>/dev/null | head -10 || echo "Pods no existe"
+              echo "El problema es que hay dependencias duplicadas de boost"
               exit 1
             fi
           fi
