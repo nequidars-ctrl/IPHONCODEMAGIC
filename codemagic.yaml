@@ -53,38 +53,52 @@ workflows:
           echo "Instalando dependencias de CocoaPods (con workaround para boost)..."
           MAX_RETRIES=3
           RETRY_COUNT=0
+          INSTALL_SUCCESS=false
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             echo "Intento $((RETRY_COUNT + 1)) de $MAX_RETRIES..."
-            if pod install --repo-update 2>&1 | tee /tmp/pod_install.log; then
-              echo "✅ Instalación exitosa"
+            POD_OUTPUT=$(pod install --repo-update 2>&1)
+            POD_EXIT_CODE=$?
+            echo "$POD_OUTPUT"
+            
+            if [ $POD_EXIT_CODE -eq 0 ] && [ -d "TSXNEQUIKIL.xcworkspace" ]; then
+              echo "✅ Instalación exitosa y workspace generado"
+              INSTALL_SUCCESS=true
               break
             else
               RETRY_COUNT=$((RETRY_COUNT + 1))
-              if grep -q "checksum was incorrect" /tmp/pod_install.log; then
-                echo "⚠️ Error de checksum detectado, aplicando workaround..."
-                echo "Limpiando caché específico de boost..."
+              if echo "$POD_OUTPUT" | grep -q "checksum was incorrect"; then
+                echo "⚠️ Error de checksum detectado, aplicando workaround drástico..."
+                echo "Limpiando todos los cachés de boost..."
                 rm -rf ~/Library/Caches/CocoaPods/Pods/External/boost-* 2>/dev/null || true
                 rm -rf ~/.cocoapods/repos/trunk/Specs/boost 2>/dev/null || true
+                rm -rf ~/Library/Caches/CocoaPods/Pods/Release/boost-* 2>/dev/null || true
                 pod cache clean boost --all 2>/dev/null || true
-                echo "Forzando actualización del spec de boost..."
-                pod spec cat boost 1.76.0 > /dev/null 2>&1 || true
+                echo "Actualizando repositorio completo..."
                 pod repo update trunk 2>/dev/null || true
+                pod repo update 2>/dev/null || true
               fi
               if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 echo "⚠️ Intento $RETRY_COUNT falló, limpiando y reintentando..."
                 rm -rf Pods Podfile.lock
                 sleep 3
-              else
-                echo "❌ Todos los intentos fallaron"
-                echo "Intentando instalación sin verificación de checksum..."
-                export COCOAPODS_DISABLE_STATS=true
-                pod install --repo-update --verbose 2>&1 | grep -v "checksum" || {
-                  echo "ERROR: No se pudo instalar dependencias"
-                  exit 1
-                }
               fi
             fi
           done
+          
+          if [ "$INSTALL_SUCCESS" = false ]; then
+            echo "❌ Todos los intentos fallaron, intentando solución alternativa..."
+            echo "Modificando Podfile para usar versión específica de boost..."
+            if ! grep -q "pod 'boost'" Podfile; then
+              sed -i.bak '/use_react_native!/a\
+  pod '\''boost'\'', :'\''1.76.0'\'', :modular_headers => true
+' Podfile
+            fi
+            rm -rf Pods Podfile.lock
+            pod install --repo-update || {
+              echo "ERROR: No se pudo instalar dependencias incluso con solución alternativa"
+              exit 1
+            }
+          fi
           if [ ! -d "TSXNEQUIKIL.xcworkspace" ]; then
             echo "ERROR: TSXNEQUIKIL.xcworkspace no se generó después de pod install!"
             exit 1
