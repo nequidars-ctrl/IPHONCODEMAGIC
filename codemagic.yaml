@@ -43,12 +43,33 @@ workflows:
             echo "⚠️ TSXNEQUIKIL.xcodeproj no encontrado, pero continuando..."
             echo "CocoaPods debería encontrarlo automáticamente con project especificado en Podfile"
           fi
-          echo "Limpiando caché de CocoaPods..."
+          echo "Limpiando instalación anterior de CocoaPods..."
+          rm -rf Pods Podfile.lock
+          echo "Limpiando caché de CocoaPods (boost específicamente)..."
+          pod cache clean boost --all 2>/dev/null || true
           pod cache clean --all 2>/dev/null || true
           echo "Actualizando repositorio de CocoaPods..."
           pod repo update 2>/dev/null || true
-          echo "Instalando dependencias de CocoaPods..."
-          pod install --repo-update
+          echo "Instalando dependencias de CocoaPods (con reintentos)..."
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if pod install --repo-update; then
+              echo "✅ Instalación exitosa"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️ Intento $RETRY_COUNT falló, limpiando y reintentando..."
+                rm -rf Pods Podfile.lock
+                pod cache clean boost --all 2>/dev/null || true
+                sleep 2
+              else
+                echo "❌ Todos los intentos fallaron"
+                exit 1
+              fi
+            fi
+          done
           if [ ! -d "TSXNEQUIKIL.xcworkspace" ]; then
             echo "ERROR: TSXNEQUIKIL.xcworkspace no se generó después de pod install!"
             exit 1
