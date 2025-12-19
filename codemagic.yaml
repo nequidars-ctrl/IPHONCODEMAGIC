@@ -117,50 +117,44 @@ workflows:
           PBXPROJ="TSXNEQUIKIL.xcodeproj/project.pbxproj"
           
           if [ -f "$PBXPROJ" ]; then
-            # Agregar PRODUCT_NAME si no existe usando Python para evitar problemas de YAML
-            if ! grep -q "PRODUCT_NAME" "$PBXPROJ"; then
-              echo "Agregando PRODUCT_NAME al proyecto..."
-              python3 << 'PYEOF'
+            # Crear script Python temporal para modificar project.pbxproj
+            cat > /tmp/fix_pbxproj.py << 'PYEOF'
 import re
-with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'r') as f:
+import sys
+
+pbxproj_path = 'TSXNEQUIKIL.xcodeproj/project.pbxproj'
+with open(pbxproj_path, 'r') as f:
     content = f.read()
+
+# Agregar PRODUCT_NAME si no existe
 if 'PRODUCT_NAME' not in content:
-    # Buscar buildSettings y agregar PRODUCT_NAME
     pattern = r'(buildSettings = \{)([^}]*?)(\t\t\};)'
     replacement = r'\1\2\t\t\tPRODUCT_NAME = TSXNEQUIKIL;\n\3'
     content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-    with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'w') as f:
-        f.write(content)
-PYEOF
-            fi
-            
-            # Agregar otras configuraciones necesarias
-            python3 << 'PYEOF'
-import re
-with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'r') as f:
-    content = f.read()
-    
+
 # Agregar INFOPLIST_FILE si no existe
 if 'INFOPLIST_FILE' not in content:
     pattern = r'(PRODUCT_NAME = TSXNEQUIKIL;)([^}]*?)(\t\t\};)'
     replacement = r'\1\n\t\t\tINFOPLIST_FILE = TSXNEQUIKIL/Info.plist;\2\3'
     content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-    
+
 # Agregar PRODUCT_BUNDLE_IDENTIFIER si no existe
 if 'PRODUCT_BUNDLE_IDENTIFIER' not in content:
     pattern = r'(INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;)([^}]*?)(\t\t\};)'
     replacement = r'\1\n\t\t\tPRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;\2\3'
     content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-    
+
 # Agregar IPHONEOS_DEPLOYMENT_TARGET si no existe
 if 'IPHONEOS_DEPLOYMENT_TARGET' not in content:
     pattern = r'(PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;)([^}]*?)(\t\t\};)'
     replacement = r'\1\n\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 12.4;\2\3'
     content = re.sub(pattern, replacement, content, flags=re.DOTALL)
 
-with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'w') as f:
+with open(pbxproj_path, 'w') as f:
     f.write(content)
+print("Configuraciones agregadas correctamente")
 PYEOF
+            python3 /tmp/fix_pbxproj.py
             echo "✅ Configuraciones del proyecto corregidas"
           else
             echo "⚠️ project.pbxproj no encontrado, pero continuando..."
