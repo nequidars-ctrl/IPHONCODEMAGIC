@@ -22,13 +22,13 @@ workflows:
             echo "Creando proyecto temporal para extraer project.pbxproj..."
             TEMP_DIR=$(mktemp -d)
             cd "$TEMP_DIR"
-            npx react-native@0.72.6 init TempProject --skip-install --skip-git
-            if [ -f "TempProject/ios/TempProject.xcodeproj/project.pbxproj" ]; then
-              echo "Copiando project.pbxproj y ajustando..."
-              cp TempProject/ios/TempProject.xcodeproj/project.pbxproj "$OLDPWD/ios/TSXNEQUIKIL.xcodeproj/project.pbxproj"
+            npx react-native@0.72.6 init TSXNEQUIKIL --skip-install --skip-git
+            if [ -f "TSXNEQUIKIL/ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
+              echo "Copiando project.pbxproj..."
+              cp TSXNEQUIKIL/ios/TSXNEQUIKIL.xcodeproj/project.pbxproj "$OLDPWD/ios/TSXNEQUIKIL.xcodeproj/project.pbxproj"
               cd "$OLDPWD"
               rm -rf "$TEMP_DIR"
-              echo "✅ project.pbxproj generado"
+              echo "✅ project.pbxproj generado y copiado"
             else
               echo "❌ No se pudo generar project.pbxproj"
               exit 1
