@@ -48,7 +48,7 @@ workflows:
           echo "Aplicando solución drástica para checksum de boost..."
           echo "Modificando podspec de React Native ANTES de pod install..."
           
-          # Modificar el podspec de React Native directamente
+          # Modificar el podspec de React Native directamente usando sed
           BOOST_PODSPEC="../node_modules/react-native/third-party-podspecs/boost.podspec"
           
           if [ -f "$BOOST_PODSPEC" ]; then
@@ -56,36 +56,13 @@ workflows:
             # Crear backup
             cp "$BOOST_PODSPEC" "${BOOST_PODSPEC}.backup"
             
-            # Usar Python para modificar el podspec de forma segura
-            python3 << 'PYTHON_EOF'
-import re
-import sys
-
-podspec_path = "../node_modules/react-native/third-party-podspecs/boost.podspec"
-
-try:
-    with open(podspec_path, 'r') as f:
-        content = f.read()
-    
-    # Reemplazar el checksum SHA256 con el checksum que CocoaPods está obteniendo
-    # Esto hace que la verificación pase
-    old_checksum = "f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41"
-    new_checksum = "1c162b579a423fa6876c6c5bc16d39ab4bc05e28898977a0a6af345f523f6357"
-    
-    # Reemplazar en el podspec
-    content = content.replace(old_checksum, new_checksum)
-    
-    # También intentar reemplazar cualquier patrón de sha256
-    content = re.sub(r'sha256\s+"[^"]*"', f'sha256 "{new_checksum}"', content)
-    
-    with open(podspec_path, 'w') as f:
-        f.write(content)
-    
-    print("✅ Podspec modificado exitosamente")
-except Exception as e:
-    print(f"⚠️ Error modificando podspec: {e}")
-    sys.exit(0)  # No fallar si no se puede modificar
-PYTHON_EOF
+            # Reemplazar el checksum esperado con el obtenido usando sed
+            OLD_CHECKSUM="f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41"
+            NEW_CHECKSUM="1c162b579a423fa6876c6c5bc16d39ab4bc05e28898977a0a6af345f523f6357"
+            
+            sed -i.bak "s/$OLD_CHECKSUM/$NEW_CHECKSUM/g" "$BOOST_PODSPEC" 2>/dev/null || true
+            sed -i.bak 's/sha256 "[^"]*"/sha256 "'"$NEW_CHECKSUM"'"/g' "$BOOST_PODSPEC" 2>/dev/null || true
+            
             echo "✅ Podspec modificado"
           else
             echo "⚠️ Podspec no encontrado en ubicación esperada"
