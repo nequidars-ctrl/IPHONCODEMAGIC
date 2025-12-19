@@ -17,8 +17,8 @@ workflows:
       
       - name: Setup iOS project
         script: |
-          cd ios
           echo "🔍 Verificando estructura del proyecto iOS..."
+          cd ios
           
           # Verificar que los archivos fuente existan
           if [ ! -f "TSXNEQUIKIL/AppDelegate.mm" ] || [ ! -f "TSXNEQUIKIL/main.m" ]; then
@@ -26,26 +26,51 @@ workflows:
             exit 1
           fi
           
-          # Si no existe project.pbxproj, intentar usar react-native para inicializarlo
-          if [ ! -f "TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
-            echo "⚠️ project.pbxproj no encontrado"
-            echo "Intentando usar react-native para inicializar proyecto iOS..."
-            cd ..
-            # Usar react-native para actualizar/crear el proyecto iOS
-            npx react-native init TSXNEQUIKIL_TEMP --skip-install --skip-git-init 2>&1 | tail -20 || true
-            if [ -f "TSXNEQUIKIL_TEMP/ios/TSXNEQUIKIL_TEMP.xcodeproj/project.pbxproj" ]; then
-              echo "Copiando project.pbxproj desde proyecto temporal..."
-              cp -r TSXNEQUIKIL_TEMP/ios/TSXNEQUIKIL_TEMP.xcodeproj/project.pbxproj ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || true
-              # Modificar el nombre del proyecto en el pbxproj
-              sed -i.bak 's/TSXNEQUIKIL_TEMP/TSXNEQUIKIL/g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || \
-              sed -i '' 's/TSXNEQUIKIL_TEMP/TSXNEQUIKIL/g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || true
-              rm -rf TSXNEQUIKIL_TEMP
-            fi
-            cd ios
-          fi
-          
           # Asegurar que el directorio .xcodeproj existe
           mkdir -p TSXNEQUIKIL.xcodeproj
+          
+          # Si no existe project.pbxproj, generarlo usando react-native init
+          if [ ! -f "TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
+            echo "⚠️ project.pbxproj no encontrado, generándolo..."
+            cd ..
+            
+            # Crear proyecto temporal con react-native init
+            echo "Generando proyecto temporal con react-native init..."
+            npx react-native init TSXNEQUIKIL_TEMP --skip-install --skip-git-init --version 0.72.6 2>&1 | grep -E "(Creating|Copying|Done)" || true
+            
+            if [ -f "TSXNEQUIKIL_TEMP/ios/TSXNEQUIKIL_TEMP.xcodeproj/project.pbxproj" ]; then
+              echo "✅ project.pbxproj generado, copiando y adaptando..."
+              mkdir -p ios/TSXNEQUIKIL.xcodeproj
+              cp TSXNEQUIKIL_TEMP/ios/TSXNEQUIKIL_TEMP.xcodeproj/project.pbxproj ios/TSXNEQUIKIL.xcodeproj/project.pbxproj
+              
+              # Reemplazar nombre del proyecto en el pbxproj
+              sed -i.bak 's/TSXNEQUIKIL_TEMP/TSXNEQUIKIL/g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || \
+              sed -i '' 's/TSXNEQUIKIL_TEMP/TSXNEQUIKIL/g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || true
+              
+              # Reemplazar rutas de archivos
+              sed -i.bak 's|TSXNEQUIKIL_TEMP/|TSXNEQUIKIL/|g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || \
+              sed -i '' 's|TSXNEQUIKIL_TEMP/|TSXNEQUIKIL/|g' ios/TSXNEQUIKIL.xcodeproj/project.pbxproj 2>/dev/null || true
+              
+              echo "✅ project.pbxproj copiado y adaptado"
+              rm -rf TSXNEQUIKIL_TEMP
+            else
+              echo "❌ ERROR: No se pudo generar project.pbxproj"
+              echo "Contenido del directorio temporal:"
+              ls -la TSXNEQUIKIL_TEMP/ios/ 2>/dev/null | head -10 || true
+              exit 1
+            fi
+            cd ios
+          else
+            echo "✅ project.pbxproj ya existe"
+          fi
+          
+          # Verificar que el archivo existe y tiene contenido
+          if [ ! -f "TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
+            echo "ERROR: project.pbxproj no existe o está vacío después del setup"
+            exit 1
+          fi
+          
+          echo "✅ project.pbxproj verificado: $(wc -l < TSXNEQUIKIL.xcodeproj/project.pbxproj) líneas"
           cd ..
       
       - name: Install CocoaPods dependencies
