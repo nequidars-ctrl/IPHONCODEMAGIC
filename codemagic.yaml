@@ -18,15 +18,21 @@ workflows:
         script: |
           echo "Verificando proyecto iOS..."
           if [ ! -f "ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
-            echo "⚠️ project.pbxproj no encontrado"
-            echo "El proyecto iOS necesita ser regenerado"
-            echo "Verificando estructura..."
-            ls -la ios/TSXNEQUIKIL.xcodeproj/ 2>/dev/null || echo "Directorio .xcodeproj vacío"
-            echo ""
-            echo "ERROR: El proyecto Xcode está incompleto"
-            echo "Necesitas regenerar el proyecto iOS localmente y subirlo a GitHub"
-            echo "O usar: npx react-native upgrade para regenerar iOS"
-            exit 1
+            echo "⚠️ project.pbxproj no encontrado, generando proyecto iOS..."
+            echo "Creando proyecto temporal para extraer project.pbxproj..."
+            TEMP_DIR=$(mktemp -d)
+            cd "$TEMP_DIR"
+            npx react-native@0.72.6 init TempProject --skip-install --skip-git
+            if [ -f "TempProject/ios/TempProject.xcodeproj/project.pbxproj" ]; then
+              echo "Copiando project.pbxproj y ajustando..."
+              cp TempProject/ios/TempProject.xcodeproj/project.pbxproj "$OLDPWD/ios/TSXNEQUIKIL.xcodeproj/project.pbxproj"
+              cd "$OLDPWD"
+              rm -rf "$TEMP_DIR"
+              echo "✅ project.pbxproj generado"
+            else
+              echo "❌ No se pudo generar project.pbxproj"
+              exit 1
+            fi
           else
             echo "✅ project.pbxproj existe"
           fi
