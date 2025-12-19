@@ -139,16 +139,46 @@ workflows:
           cd ios
           
           echo "🏗️ Construyendo app..."
+          echo "📱 Listando simuladores disponibles..."
+          xcrun simctl list devices available 2>/dev/null | head -20 || echo "No hay simuladores disponibles"
+          
+          # Intentar construir para simulador genérico primero
+          echo "🏗️ Intentando construir para simulador genérico..."
           xcodebuild clean build \
             -workspace TSXNEQUIKIL.xcworkspace \
             -scheme TSXNEQUIKIL \
             -configuration Release \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 14' \
+            -destination 'generic/platform=iOS Simulator' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            -derivedDataPath ./DerivedData
+            -derivedDataPath ./DerivedData 2>&1 | tee /tmp/xcodebuild.log
+          
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          
+          # Si falla, intentar sin destino específico (solo SDK)
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "⚠️ Build con simulador genérico falló, intentando solo con SDK..."
+            xcodebuild clean build \
+              -workspace TSXNEQUIKIL.xcworkspace \
+              -scheme TSXNEQUIKIL \
+              -configuration Release \
+              -sdk iphonesimulator \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              -derivedDataPath ./DerivedData 2>&1 | tee /tmp/xcodebuild.log
+            BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          fi
+          
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "❌ Build falló. Últimas líneas del log:"
+            tail -30 /tmp/xcodebuild.log || true
+            exit 1
+          fi
+          
+          echo "✅ Build completado exitosamente"
           
           echo "🔍 Buscando app bundle..."
           APP_PATH=$(find ./DerivedData -name "TSXNEQUIKIL.app" -path "*/Release-iphonesimulator/*" | head -1)
