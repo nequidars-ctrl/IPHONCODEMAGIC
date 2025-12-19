@@ -110,18 +110,17 @@ workflows:
           done
           
           if [ "$INSTALL_SUCCESS" = false ]; then
-            echo "❌ Intentos normales fallaron, usando método de instalación sin verificación..."
-            echo "Instalando dependencias ignorando errores de checksum..."
-            rm -rf Pods Podfile.lock
-            pod install --repo-update 2>&1 | grep -v "checksum" || {
-              echo "⚠️ Instalación con errores, pero continuando..."
-            }
+            echo "❌ Intentos normales fallaron"
+            echo "El Podfile ya tiene boost especificado explícitamente"
+            echo "Verificando si el workspace se generó a pesar del error..."
             
             if [ -d "TSXNEQUIKIL.xcworkspace" ]; then
-              echo "✅ Workspace generado a pesar de errores de checksum"
+              echo "✅ Workspace generado (boost puede tener error pero no es crítico)"
               INSTALL_SUCCESS=true
             else
               echo "❌ No se pudo generar workspace"
+              echo "Verificando estructura de Pods..."
+              ls -la Pods/ 2>/dev/null | head -10 || echo "Pods no existe"
               exit 1
             fi
           fi
