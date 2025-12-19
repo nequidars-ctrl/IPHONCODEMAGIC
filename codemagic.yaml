@@ -117,51 +117,50 @@ workflows:
           PBXPROJ="TSXNEQUIKIL.xcodeproj/project.pbxproj"
           
           if [ -f "$PBXPROJ" ]; then
-            # Agregar PRODUCT_NAME si no existe
+            # Agregar PRODUCT_NAME si no existe usando Python para evitar problemas de YAML
             if ! grep -q "PRODUCT_NAME" "$PBXPROJ"; then
               echo "Agregando PRODUCT_NAME al proyecto..."
-              # Buscar las líneas de buildSettings y agregar PRODUCT_NAME
-              sed -i.bak '/buildSettings = {/a\
-				PRODUCT_NAME = TSXNEQUIKIL;
-' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' '/buildSettings = {/a\
-				PRODUCT_NAME = TSXNEQUIKIL;
-' "$PBXPROJ" 2>/dev/null || true
+              python3 << 'PYEOF'
+import re
+with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'r') as f:
+    content = f.read()
+if 'PRODUCT_NAME' not in content:
+    # Buscar buildSettings y agregar PRODUCT_NAME
+    pattern = r'(buildSettings = \{)([^}]*?)(\t\t\};)'
+    replacement = r'\1\2\t\t\tPRODUCT_NAME = TSXNEQUIKIL;\n\3'
+    content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'w') as f:
+        f.write(content)
+PYEOF
             fi
             
-            # Agregar INFOPLIST_FILE si no existe
-            if ! grep -q "INFOPLIST_FILE" "$PBXPROJ"; then
-              echo "Agregando INFOPLIST_FILE al proyecto..."
-              sed -i.bak '/PRODUCT_NAME/a\
-				INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;
-' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' '/PRODUCT_NAME/a\
-				INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;
-' "$PBXPROJ" 2>/dev/null || true
-            fi
-            
-            # Agregar PRODUCT_BUNDLE_IDENTIFIER
-            if ! grep -q "PRODUCT_BUNDLE_IDENTIFIER" "$PBXPROJ"; then
-              echo "Agregando PRODUCT_BUNDLE_IDENTIFIER al proyecto..."
-              sed -i.bak '/INFOPLIST_FILE/a\
-				PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;
-' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' '/INFOPLIST_FILE/a\
-				PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;
-' "$PBXPROJ" 2>/dev/null || true
-            fi
-            
-            # Agregar IPHONEOS_DEPLOYMENT_TARGET
-            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
-              echo "Agregando IPHONEOS_DEPLOYMENT_TARGET al proyecto..."
-              sed -i.bak '/PRODUCT_BUNDLE_IDENTIFIER/a\
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
-' "$PBXPROJ" 2>/dev/null || \
-              sed -i '' '/PRODUCT_BUNDLE_IDENTIFIER/a\
-				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
-' "$PBXPROJ" 2>/dev/null || true
-            fi
-            
+            # Agregar otras configuraciones necesarias
+            python3 << 'PYEOF'
+import re
+with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'r') as f:
+    content = f.read()
+    
+# Agregar INFOPLIST_FILE si no existe
+if 'INFOPLIST_FILE' not in content:
+    pattern = r'(PRODUCT_NAME = TSXNEQUIKIL;)([^}]*?)(\t\t\};)'
+    replacement = r'\1\n\t\t\tINFOPLIST_FILE = TSXNEQUIKIL/Info.plist;\2\3'
+    content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    
+# Agregar PRODUCT_BUNDLE_IDENTIFIER si no existe
+if 'PRODUCT_BUNDLE_IDENTIFIER' not in content:
+    pattern = r'(INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;)([^}]*?)(\t\t\};)'
+    replacement = r'\1\n\t\t\tPRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;\2\3'
+    content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    
+# Agregar IPHONEOS_DEPLOYMENT_TARGET si no existe
+if 'IPHONEOS_DEPLOYMENT_TARGET' not in content:
+    pattern = r'(PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;)([^}]*?)(\t\t\};)'
+    replacement = r'\1\n\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 12.4;\2\3'
+    content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+
+with open('TSXNEQUIKIL.xcodeproj/project.pbxproj', 'w') as f:
+    f.write(content)
+PYEOF
             echo "✅ Configuraciones del proyecto corregidas"
           else
             echo "⚠️ project.pbxproj no encontrado, pero continuando..."
