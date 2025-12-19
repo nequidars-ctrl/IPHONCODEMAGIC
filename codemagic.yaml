@@ -1,6 +1,6 @@
 workflows:
-  ios-workflow:
-    name: iOS Workflow
+  android-ios-workflow:
+    name: Android & iOS Workflow
     max_build_duration: 120
     instance_type: mac_mini_m1
     environment:
@@ -14,160 +14,38 @@ workflows:
       - name: Install dependencies
         script: |
           npm ci
+      
+      - name: Build Android APK
+        script: |
+          echo "🔨 Compilando Android APK..."
+          cd android
+          ./gradlew assembleRelease
+          cd ..
+          echo "✅ APK generado en: android/app/build/outputs/apk/release/"
+      
       - name: Setup iOS project
         script: |
-          echo "Verificando proyecto iOS..."
-          if [ ! -f "ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "ios/TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
-            echo "⚠️ project.pbxproj no encontrado o vacío"
-            echo "Generando project.pbxproj básico desde base64..."
-            cd ios
+          cd ios
+          if [ ! -f "TSXNEQUIKIL.xcodeproj/project.pbxproj" ] || [ ! -s "TSXNEQUIKIL.xcodeproj/project.pbxproj" ]; then
+            echo "Generando project.pbxproj básico..."
             mkdir -p TSXNEQUIKIL.xcodeproj
             echo "Ly8gISQqVVRGOCokIQp7CglhcmNoaXZlVmVyc2lvbiA9IDE7CgljbGFzc2VzID0gewoJfTsKCW9iamVjdFZlcnNpb24gPSA1NDsKCW9iamVjdHMgPSB7CgkJcm9vdE9iamVjdCA9IDEgLyogUHJvamVjdCBvYmplY3QgKi87CgkJMSAvKiBQcm9qZWN0IG9iamVjdCAqLyA9IHsKCQkJaXNhID0gUEJYUHJvamVjdDsKCQkJYXR0cmlidXRlcyA9IHsKCQkJCUxhc3RTd2lmdFVwZGF0ZUNoZWNrID0gMTUwMDsKCQkJCUxhc3RVcGdyYWRlQ2hlY2sgPSAxNTAwOwoJCQl9OwoJCQlidWlsZENvbmZpZ3VyYXRpb25MaXN0ID0gMyAvKiBCdWlsZCBjb25maWd1cmF0aW9uIGxpc3QgZm9yIFBCWFByb2plY3QgIlRTWE5FUVVJS0lMIiAqLzsKCQkJY29tcGF0aWJpbGl0eVZlcnNpb24gPSAiWGNvZGUgMTQuMCI7CgkJCWRldmVsb3BtZW50UmVnaW9uID0gZW47CgkJCWhhc1NjYW5uZWRGb3JFbmNvZGluZ3MgPSAwOwoJCQlrbm93blJlZ2lvbnMgPSAoCgkJCQllbiwKCQkJCUJhc2UsCgkJCSk7CgkJCW1haW5Hcm91cCA9IDQ7CgkJCXByb2R1Y3RSZWZHcm91cCA9IDUgLyogUHJvZHVjdHMgKi87CgkJCXByb2plY3REaXJQYXRoID0gIiI7CgkJCXByb2plY3RSb290ID0gIiI7CgkJCXRhcmdldHMgPSAoCgkJCQkyIC8qIFRTWE5FUVVJS0lMICovLAoJCQkpOwoJCX07CgkJMiAvKiBUU1hORVFVSUtJTCAqLyA9IHsKCQkJaXNhID0gUEJYTmF0aXZlVGFyZ2V0OwoJCQlidWlsZENvbmZpZ3VyYXRpb25MaXN0ID0gNiAvKiBCdWlsZCBjb25maWd1cmF0aW9uIGxpc3QgZm9yIFBCWE5hdGl2ZVRhcmdldCAiVFNYTkVRVUlLSUwiICovOwoJCQlidWlsZFBoYXNlcyA9ICgKCQkJKTsKCQkJYnVpbGRSdWxlcyA9ICgKCQkJKTsKCQkJZGVwZW5kZW5jaWVzID0gKAoJCQkpOwoJCQluYW1lID0gVFNYTkVRVUlLSUw7CgkJCXByb2R1Y3ROYW1lID0gVFNYTkVRVUlLSUw7CgkJCXByb2R1Y3RSZWZlcmVuY2UgPSA3IC8qIFRTWE5FUVVJS0lMLmFwcCAqLzsKCQkJcHJvZHVjdFR5cGUgPSAiY29tLmFwcGxlLnByb2R1Y3QtdHlwZS5hcHBsaWNhdGlvbiI7CgkJfTsKCQkzIC8qIEJ1aWxkIGNvbmZpZ3VyYXRpb24gbGlzdCBmb3IgUEJYUHJvamVjdCAiVFNYTkVRVUlLSUwiICovID0gewoJCQlpc2EgPSBYQ0NvbmZpZ3VyYXRpb25MaXN0OwoJCQlidWlsZENvbmZpZ3VyYXRpb25zID0gKAoJCQkJOCAvKiBEZWJ1ZyAqLywKCQkJCTkgLyogUmVsZWFzZSAqLywKCQkJKTsKCQkJZGVmYXVsdENvbmZpZ3VyYXRpb25Jc1Zpc2libGUgPSAwOwoJCQlkZWZhdWx0Q29uZmlndXJhdGlvbk5hbWUgPSBSZWxlYXNlOwoJCX07CgkJNCA9IHsKCQkJaXNhID0gUEJYR3JvdXA7CgkJCWNoaWxkcmVuID0gKAoJCQkJNSAvKiBQcm9kdWN0cyAqLywKCQkJKTsKCQkJc291cmNlVHJlZSA9ICI8Z3JvdXA+IjsKCQl9OwoJCTUgLyogUHJvZHVjdHMgKi8gPSB7CgkJCWlzYSA9IFBCWEdyb3VwOwoJCQljaGlsZHJlbiA9ICgKCQkJCTcgLyogVFNYTkVRVUlLSUwuYXBwICovLAoJCQkpOwoJCQluYW1lID0gUHJvZHVjdHM7CgkJCXNvdXJjZVRyZWUgPSAiPGdyb3VwPiI7CgkJfTsKCQk2IC8qIEJ1aWxkIGNvbmZpZ3VyYXRpb24gbGlzdCBmb3IgUEJYTmF0aXZlVGFyZ2V0ICJUU1hORVFVSUtJTCIgKi8gPSB7CgkJCWlzYSA9IFhDQ29uZmlndXJhdGlvbkxpc3Q7CgkJCWJ1aWxkQ29uZmlndXJhdGlvbnMgPSAoCgkJCQkxMCAvKiBEZWJ1ZyAqLywKCQkJCTExIC8qIFJlbGVhc2UgKi8sCgkJCSk7CgkJCWRlZmF1bHRDb25maWd1cmF0aW9uSXNWaXNpYmxlID0gMDsKCQkJZGVmYXVsdENvbmZpZ3VyYXRpb25OYW1lID0gUmVsZWFzZTsKCQl9OwoJCTcgLyogVFNYTkVRVUlLSUwuYXBwICovID0gewoJCQlpc2EgPSBQQlhGaWxlUmVmZXJlbmNlOwoJCQlleHBsaWNpdEZpbGVUeXBlID0gd3JhcHBlci5hcHBsaWNhdGlvbjsKCQkJaW5jbHVkZUluSW5kZXggPSAwOwoJCQlwYXRoID0gVFNYTkVRVUlLSUwuYXBwOwoJCQlzb3VyY2VUcmVlID0gQlVJTFRfUFJPRFVDVFNfRElSOwoJCX07CgkJOCAvKiBEZWJ1ZyAqLyA9IHsKCQkJaXNhID0gWENCdWlsZENvbmZpZ3VyYXRpb247CgkJCWJ1aWxkU2V0dGluZ3MgPSB7CgkJCX07CgkJCW5hbWUgPSBEZWJ1ZzsKCQl9OwoJCTkgLyogUmVsZWFzZSAqLyA9IHsKCQkJaXNhID0gWENCdWlsZENvbmZpZ3VyYXRpb247CgkJCWJ1aWxkU2V0dGluZ3MgPSB7CgkJCX07CgkJCW5hbWUgPSBSZWxlYXNlOwoJCX07CgkJMTAgLyogRGVidWcgKi8gPSB7CgkJCWlzYSA9IFhDQnVpbGRDb25maWd1cmF0aW9uOwoJCQlidWlsZFNldHRpbmdzID0gewoJCQl9OwoJCQluYW1lID0gRGVidWc7CgkJfTsKCQkxMSAvKiBSZWxlYXNlICovID0gewoJCQlpc2EgPSBYQ0J1aWxkQ29uZmlndXJhdGlvbjsKCQkJYnVpbGRTZXR0aW5ncyA9IHsKCQkJfTsKCQkJbmFtZSA9IFJlbGVhc2U7CgkJfTsKCX07Cglyb290T2JqZWN0ID0gMSAvKiBQcm9qZWN0IG9iamVjdCAqLzsKfQo=" | base64 -d > TSXNEQUIKIL.xcodeproj/project.pbxproj
-            echo "✅ project.pbxproj básico creado"
-            cd ..
-          else
-            echo "✅ project.pbxproj existe"
+            echo "✅ project.pbxproj creado"
           fi
+          cd ..
+      
       - name: Install CocoaPods dependencies
         script: |
           cd ios
-          if [ ! -f "Podfile" ]; then
-            echo "ERROR: Podfile not found!"
-            exit 1
-          fi
-          echo "Verificando estructura del proyecto..."
-          ls -la | head -10
-          if [ -d "TSXNEQUIKIL.xcodeproj" ]; then
-            echo "✅ TSXNEQUIKIL.xcodeproj encontrado"
-          else
-            echo "⚠️ TSXNEQUIKIL.xcodeproj no encontrado, pero continuando..."
-            echo "CocoaPods debería encontrarlo automáticamente con project especificado en Podfile"
-          fi
-          echo "Limpiando instalación anterior de CocoaPods..."
-          rm -rf Pods Podfile.lock
-          echo "Aplicando solución drástica para checksum de boost..."
-          echo "Modificando podspec de React Native ANTES de pod install..."
-          
-          # Modificar el podspec de React Native - ruta correcta desde ios/
-          BOOST_PODSPEC="../node_modules/react-native/third-party-podspecs/boost.podspec"
-          OLD_CHECKSUM="f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41"
-          NEW_CHECKSUM="1c162b579a423fa6876c6c5bc16d39ab4bc05e28898977a0a6af345f523f6357"
-          
-          echo "Buscando podspec de boost..."
-          if [ -f "$BOOST_PODSPEC" ]; then
-            echo "✅ Podspec encontrado: $BOOST_PODSPEC"
-            echo "Modificando checksum..."
-            
-            # Crear backup
-            cp "$BOOST_PODSPEC" "${BOOST_PODSPEC}.backup" 2>/dev/null || true
-            
-            # Reemplazar checksum usando sed (macOS compatible)
-            sed -i '' "s/$OLD_CHECKSUM/$NEW_CHECKSUM/g" "$BOOST_PODSPEC" 2>/dev/null || \
-            sed -i.bak "s/$OLD_CHECKSUM/$NEW_CHECKSUM/g" "$BOOST_PODSPEC" 2>/dev/null || true
-            
-            # También reemplazar cualquier sha256
-            sed -i '' 's/sha256 "[^"]*"/sha256 "'"$NEW_CHECKSUM"'"/g' "$BOOST_PODSPEC" 2>/dev/null || \
-            sed -i.bak 's/sha256 "[^"]*"/sha256 "'"$NEW_CHECKSUM"'"/g' "$BOOST_PODSPEC" 2>/dev/null || true
-            
-            # Verificar que se modificó
-            if grep -q "$NEW_CHECKSUM" "$BOOST_PODSPEC" 2>/dev/null; then
-              echo "✅ Podspec modificado correctamente"
-            else
-              echo "⚠️ No se pudo verificar la modificación, pero continuando..."
-            fi
-          else
-            echo "⚠️ Podspec no encontrado en: $BOOST_PODSPEC"
-            echo "Buscando en otras ubicaciones..."
-            find .. -name "boost.podspec" -type f 2>/dev/null | head -3 || echo "No encontrado"
-          fi
-          
-          echo "Limpiando caché de CocoaPods..."
-          pod cache clean boost --all 2>/dev/null || true
-          pod cache clean --all 2>/dev/null || true
-          echo "Actualizando repositorio de CocoaPods..."
-          pod repo update 2>/dev/null || true
-          
-          echo "Instalando dependencias de CocoaPods..."
-          export COCOAPODS_DISABLE_DETERMINISTIC_UUIDS=1
-          export COCOAPODS_SKIP_UPDATE_MESSAGE=1
-          
-          MAX_RETRIES=2
-          RETRY_COUNT=0
-          INSTALL_SUCCESS=false
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            echo "Intento $((RETRY_COUNT + 1)) de $MAX_RETRIES..."
-            
-            POD_OUTPUT=$(pod install --repo-update 2>&1)
-            POD_EXIT_CODE=$?
-            echo "$POD_OUTPUT"
-            
-            if [ $POD_EXIT_CODE -eq 0 ] && [ -d "TSXNEQUIKIL.xcworkspace" ]; then
-              echo "✅ Instalación exitosa y workspace generado"
-              INSTALL_SUCCESS=true
-              break
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              if echo "$POD_OUTPUT" | grep -q "checksum was incorrect"; then
-                echo "⚠️ Error de checksum detectado, aplicando solución alternativa..."
-                echo "Instalando boost manualmente desde fuente alternativa..."
-                
-                BOOST_URL="https://sourceforge.net/projects/boost/files/boost/1.76.0/boost_1_76_0.tar.bz2/download"
-                BOOST_CACHE_DIR="$HOME/Library/Caches/CocoaPods/Pods/External"
-                mkdir -p "$BOOST_CACHE_DIR"
-                
-                echo "Descargando boost desde fuente alternativa..."
-                curl -L "$BOOST_URL" -o /tmp/boost_1_76_0.tar.bz2 2>/dev/null || true
-                
-                if [ -f /tmp/boost_1_76_0.tar.bz2 ]; then
-                  echo "Extrayendo boost..."
-                  cd /tmp && tar -xjf boost_1_76_0.tar.bz2 2>/dev/null || true
-                  if [ -d boost_1_76_0 ]; then
-                    echo "Copiando boost al caché..."
-                    cp -r boost_1_76_0 "$BOOST_CACHE_DIR/boost-1.76.0" 2>/dev/null || true
-                  fi
-                  cd - > /dev/null
-                fi
-                
-                echo "Limpiando cachés problemáticos..."
-                rm -rf ~/Library/Caches/CocoaPods/Pods/External/boost-* 2>/dev/null || true
-                rm -rf ~/.cocoapods/repos/trunk/Specs/boost 2>/dev/null || true
-                pod cache clean boost --all 2>/dev/null || true
-                pod repo update trunk 2>/dev/null || true
-              fi
-              
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "⚠️ Intento $RETRY_COUNT falló, limpiando y reintentando..."
-                rm -rf Pods Podfile.lock
-                sleep 5
-              fi
-            fi
-          done
-          
-          if [ "$INSTALL_SUCCESS" = false ]; then
-            echo "❌ Intentos normales fallaron"
-            echo "El error es por dependencias duplicadas de boost"
-            echo "React Native ya incluye boost automáticamente"
-            echo "Verificando si el workspace se generó a pesar del error..."
-            
-            if [ -d "TSXNEQUIKIL.xcworkspace" ]; then
-              echo "✅ Workspace generado"
-              INSTALL_SUCCESS=true
-            else
-              echo "❌ No se pudo generar workspace"
-              echo "El problema es que hay dependencias duplicadas de boost"
-              exit 1
-            fi
-          fi
+          pod install
           if [ ! -d "TSXNEQUIKIL.xcworkspace" ]; then
-            echo "ERROR: TSXNEQUIKIL.xcworkspace no se generó después de pod install!"
+            echo "ERROR: Workspace no generado"
             exit 1
           fi
-          echo "✅ TSXNEQUIKIL.xcworkspace generado correctamente"
           cd ..
-      - name: Generate JS bundle
+      
+      - name: Generate JS bundle for iOS
         script: |
-          echo "Generando bundle JS con todos los assets..."
           npx react-native bundle \
             --platform ios \
             --dev false \
@@ -175,21 +53,10 @@ workflows:
             --bundle-output ios/main.jsbundle \
             --assets-dest ios/ \
             --reset-cache
-          echo "✅ Bundle generado"
-          echo "Verificando assets incluidos..."
-          if [ -d "ios/assets" ]; then
-            echo "Assets encontrados:"
-            find ios/assets -type f | head -10
-          fi
-      - name: Build app for simulator
+      
+      - name: Build iOS IPA
         script: |
-          if [ ! -d "$XCODE_WORKSPACE" ]; then
-            echo "ERROR: Workspace no encontrado: $XCODE_WORKSPACE"
-            echo "Verificando estructura..."
-            ls -la ios/ | grep -E "\.xcworkspace|\.xcodeproj"
-            exit 1
-          fi
-          echo "✅ Workspace encontrado: $XCODE_WORKSPACE"
+          cd ios
           xcodebuild clean build \
             -workspace "$XCODE_WORKSPACE" \
             -scheme "$XCODE_SCHEME" \
@@ -198,53 +65,29 @@ workflows:
             -destination 'platform=iOS Simulator,name=iPhone 14' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            BUNDLE_COMMAND="echo 'Bundle already created'"
-      - name: Verify bundle exists
-        script: |
-          if [ ! -f "ios/main.jsbundle" ]; then
-            echo "ERROR: main.jsbundle not found!"
-            exit 1
-          fi
-          echo "Bundle size: $(du -h ios/main.jsbundle | cut -f1)"
-      - name: Copy bundle and assets to app
-        script: |
+            CODE_SIGNING_ALLOWED=NO
+          
           APP_PATH=$(find $HOME/Library/Developer/Xcode/DerivedData -name "TSXNEQUIKIL.app" -path "*/Release-iphonesimulator/*" | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "ERROR: App bundle not found!"
-            echo "Buscando en DerivedData..."
-            find $HOME/Library/Developer/Xcode/DerivedData -name "*.app" -type d 2>/dev/null | head -5
-            exit 1
-          fi
-          echo "✅ App bundle encontrado: $APP_PATH"
-          
-          if [ -f "ios/main.jsbundle" ]; then
-            cp ios/main.jsbundle "$APP_PATH/main.jsbundle"
-            echo "✅ Bundle JS copiado: $(du -h ios/main.jsbundle | cut -f1)"
-          else
-            echo "ERROR: main.jsbundle not found to copy!"
+            echo "ERROR: App bundle no encontrado"
             exit 1
           fi
           
+          cp ios/main.jsbundle "$APP_PATH/main.jsbundle" 2>/dev/null || true
           if [ -d "ios/assets" ]; then
             cp -r ios/assets "$APP_PATH/" 2>/dev/null || true
-            echo "✅ Assets copiados al app bundle"
-            find "$APP_PATH/assets" -type f 2>/dev/null | wc -l | xargs echo "   Total de assets:"
           fi
           
-          echo "✅ Bundle y assets copiados correctamente"
-      - name: Create IPA for simulator
-        script: |
-          APP_PATH=$(find $HOME/Library/Developer/Xcode/DerivedData -name "TSXNEQUIKIL.app" -path "*/Release-iphonesimulator/*" | head -1)
-          mkdir -p build/Release-iphonesimulator/Payload
-          cp -r "$APP_PATH" build/Release-iphonesimulator/Payload/TSXNEQUIKIL.app
-          cd build/Release-iphonesimulator
-          zip -r TSXNEQUIKIL-simulator.ipa Payload
-          cd ../..
-          mkdir -p build/ios/ipa
-          mv build/Release-iphonesimulator/TSXNEQUIKIL-simulator.ipa build/ios/ipa/
+          mkdir -p ../build/ios/ipa/Payload
+          cp -r "$APP_PATH" ../build/ios/ipa/Payload/TSXNEQUIKIL.app
+          cd ../build/ios/ipa
+          zip -r TSXNEQUIKIL.ipa Payload
+          cd ../../..
+    
     artifacts:
+      - android/app/build/outputs/apk/release/*.apk
       - build/ios/ipa/*.ipa
+    
     publishing:
       email:
         recipients:
