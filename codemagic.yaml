@@ -1,0 +1,49 @@
+workflows:
+  ios-workflow:
+    name: iOS Workflow
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      vars:
+        XCODE_WORKSPACE: "ios/TSXNEQUIKIL.xcworkspace"
+        XCODE_SCHEME: "TSXNEQUIKIL"
+        APP_ID: "ui.so.nequikill"
+      node: 18.17.0
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install && cd ..
+      - name: Build app for simulator
+        script: |
+          xcodebuild clean build \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 14' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Create IPA for simulator
+        script: |
+          mkdir -p build/Release-iphonesimulator/Payload
+          cp -r $HOME/Library/Developer/Xcode/DerivedData/*/Build/Products/Release-iphonesimulator/TSXNEQUIKIL.app build/Release-iphonesimulator/Payload/
+          cd build/Release-iphonesimulator
+          zip -r TSXNEQUIKIL-simulator.ipa Payload
+          cd ../..
+          mkdir -p build/ios/ipa
+          mv build/Release-iphonesimulator/TSXNEQUIKIL-simulator.ipa build/ios/ipa/
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - user@example.com
+        notify:
+          success: true
+          failure: true
+
