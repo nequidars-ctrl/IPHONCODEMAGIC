@@ -111,6 +111,62 @@ workflows:
           fi
           
           echo "✅ Workspace generado correctamente: TSXNEQUIKIL.xcworkspace"
+          
+          # Corregir configuraciones del proyecto después de pod install
+          echo "🔧 Corrigiendo configuraciones del proyecto..."
+          PBXPROJ="TSXNEQUIKIL.xcodeproj/project.pbxproj"
+          
+          if [ -f "$PBXPROJ" ]; then
+            # Agregar PRODUCT_NAME si no existe
+            if ! grep -q "PRODUCT_NAME" "$PBXPROJ"; then
+              echo "Agregando PRODUCT_NAME al proyecto..."
+              # Buscar las líneas de buildSettings y agregar PRODUCT_NAME
+              sed -i.bak '/buildSettings = {/a\
+				PRODUCT_NAME = TSXNEQUIKIL;
+' "$PBXPROJ" 2>/dev/null || \
+              sed -i '' '/buildSettings = {/a\
+				PRODUCT_NAME = TSXNEQUIKIL;
+' "$PBXPROJ" 2>/dev/null || true
+            fi
+            
+            # Agregar INFOPLIST_FILE si no existe
+            if ! grep -q "INFOPLIST_FILE" "$PBXPROJ"; then
+              echo "Agregando INFOPLIST_FILE al proyecto..."
+              sed -i.bak '/PRODUCT_NAME/a\
+				INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;
+' "$PBXPROJ" 2>/dev/null || \
+              sed -i '' '/PRODUCT_NAME/a\
+				INFOPLIST_FILE = TSXNEQUIKIL/Info.plist;
+' "$PBXPROJ" 2>/dev/null || true
+            fi
+            
+            # Agregar PRODUCT_BUNDLE_IDENTIFIER
+            if ! grep -q "PRODUCT_BUNDLE_IDENTIFIER" "$PBXPROJ"; then
+              echo "Agregando PRODUCT_BUNDLE_IDENTIFIER al proyecto..."
+              sed -i.bak '/INFOPLIST_FILE/a\
+				PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;
+' "$PBXPROJ" 2>/dev/null || \
+              sed -i '' '/INFOPLIST_FILE/a\
+				PRODUCT_BUNDLE_IDENTIFIER = ui.so.nequikill;
+' "$PBXPROJ" 2>/dev/null || true
+            fi
+            
+            # Agregar IPHONEOS_DEPLOYMENT_TARGET
+            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
+              echo "Agregando IPHONEOS_DEPLOYMENT_TARGET al proyecto..."
+              sed -i.bak '/PRODUCT_BUNDLE_IDENTIFIER/a\
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+' "$PBXPROJ" 2>/dev/null || \
+              sed -i '' '/PRODUCT_BUNDLE_IDENTIFIER/a\
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+' "$PBXPROJ" 2>/dev/null || true
+            fi
+            
+            echo "✅ Configuraciones del proyecto corregidas"
+          else
+            echo "⚠️ project.pbxproj no encontrado, pero continuando..."
+          fi
+          
           cd ..
       
       - name: Generate JS bundle for iOS
